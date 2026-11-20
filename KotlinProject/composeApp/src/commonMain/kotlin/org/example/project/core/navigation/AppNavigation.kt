@@ -3,6 +3,7 @@ package org.example.project.core.navigation
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.key
@@ -34,6 +35,7 @@ import org.example.project.features.vendor.HeatmapScreen
 import org.example.project.features.vendor.SubscriptionScreen
 import org.example.project.features.vendor.VendorDashboardScreen
 import org.example.project.features.vendor.VendorProductsScreen
+import org.example.project.features.vendor.VendorProductEditorScreen
 import org.example.project.features.vendor.VendorRouteScreen
 import org.example.project.features.vendor.VendorSettingsScreen
 
@@ -44,7 +46,6 @@ internal fun AppGraph(
     sessionMessage: String?,
     biometricSettings: (@Composable () -> Unit)? = null,
     biometricEntry: BiometricEntry? = null,
-    showBiometricTip: Boolean = false
 ) = key(startRoute, userId) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -52,7 +53,6 @@ internal fun AppGraph(
     val currentSessionMessage by rememberUpdatedState(sessionMessage)
     val currentBiometricSettings by rememberUpdatedState(biometricSettings)
     val currentBiometricEntry by rememberUpdatedState(biometricEntry)
-    val currentShowBiometricTip by rememberUpdatedState(showBiometricTip)
 
     val showConsumerBottomNav = currentRoute in listOf(
         NavDestination.ConsumerHome.route,
@@ -109,7 +109,6 @@ internal fun AppGraph(
                 LoginScreen(
                     sessionMessage = currentSessionMessage,
                     biometricEntry = currentBiometricEntry,
-                    showBiometricTip = currentShowBiometricTip,
                     onRegisterClick = { navController.navigate(NavDestination.RegisterType.route) },
                     onForgotPassword = { navController.navigate(NavDestination.ForgotPassword.route) }
                 )
@@ -270,8 +269,34 @@ internal fun AppGraph(
                     }
                 )
             }
-            composable(NavDestination.VendorProducts.route) {
-                VendorProductsScreen(userId = userId ?: return@composable)
+            composable(NavDestination.VendorProducts.route) { entry ->
+                val catalogRevision by entry.savedStateHandle.getStateFlow("catalog_revision", 0).collectAsState()
+                VendorProductsScreen(
+                    userId = userId ?: return@composable,
+                    catalogRevision = catalogRevision,
+                    onEditProduct = { navController.navigate(NavDestination.VendorProductEditor.createRoute(it)) }
+                )
+            }
+            composable(
+                route = NavDestination.VendorProductEditor.route,
+                arguments = listOf(navArgument("productId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                })
+            ) { entry ->
+                if (userId != null) {
+                    VendorProductEditorScreen(
+                        productId = entry.arguments?.read { getStringOrNull("productId") },
+                        onBack = { navController.popBackStack() },
+                        onSaved = {
+                            navController.previousBackStackEntry?.savedStateHandle?.let { state ->
+                                state["catalog_revision"] = (state.get<Int>("catalog_revision") ?: 0) + 1
+                            }
+                            navController.popBackStack()
+                        }
+                    )
+                }
             }
         }
     }

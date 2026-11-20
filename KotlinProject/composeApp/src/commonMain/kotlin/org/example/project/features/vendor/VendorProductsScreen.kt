@@ -1,7 +1,5 @@
 package org.example.project.features.vendor
 
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,14 +10,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -38,19 +33,17 @@ import kotlinx.coroutines.launch
 
 import org.example.project.core.data.CatalogProduct
 import org.example.project.core.data.CatalogRepository
-import org.example.project.core.data.PhotoChange
 import org.example.project.core.utils.UiState
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun VendorProductsScreen(userId: String) {
+internal fun VendorProductsScreen(userId: String, catalogRevision: Int, onEditProduct: (String?) -> Unit) {
     val scope = rememberCoroutineScope()
     var reload by remember { mutableStateOf(0) }
-    var editing by remember { mutableStateOf<CatalogProduct?>(null) }
     var removing by remember { mutableStateOf<CatalogProduct?>(null) }
     var busy by remember { mutableStateOf(false) }
     var removeError by remember { mutableStateOf<String?>(null) }
-    val catalog by produceState<UiState<List<CatalogProduct>>>(UiState.Loading, userId, reload) {
+    val catalog by produceState<UiState<List<CatalogProduct>>>(UiState.Loading, userId, reload, catalogRevision) {
         value = CatalogRepository.products()
     }
 
@@ -68,13 +61,13 @@ internal fun VendorProductsScreen(userId: String) {
                 is UiState.Success -> {
                     item {
                         Button(
-                            onClick = { editing = CatalogProduct(Uuid.random().toString(), "") },
+                            onClick = { onEditProduct(null) },
                             modifier = Modifier.fillMaxWidth()
                         ) { Text("Adicionar produto") }
                     }
                     if (result.data.isEmpty()) item { Text("Seu catálogo está vazio.") }
                     items(result.data, key = { it.id }) { product ->
-                        val photo by produceState<ByteArray?>(null, product, reload) {
+                        val photo by produceState<ByteArray?>(null, product, reload, catalogRevision) {
                             value = if (product.hasPhoto) CatalogRepository.productPhoto(product.id) else null
                         }
                         Row(
@@ -84,17 +77,13 @@ internal fun VendorProductsScreen(userId: String) {
                         ) {
                             PhotoPreview(photo, null, Modifier.size(56.dp))
                             Text(product.name, modifier = Modifier.weight(1f))
-                            TextButton(onClick = { editing = product }) { Text("Editar") }
+                            TextButton(onClick = { onEditProduct(product.id) }) { Text("Editar") }
                             TextButton(onClick = { removeError = null; removing = product }) { Text("Remover") }
                         }
                     }
                 }
             }
         }
-    }
-
-    editing?.let { product ->
-        ProductEditor(product, onClose = { editing = null }, onSaved = { editing = null; reload++ })
     }
 
     removing?.let { product ->
@@ -126,57 +115,4 @@ internal fun VendorProductsScreen(userId: String) {
             }
         )
     }
-}
-
-@Composable
-private fun ProductEditor(product: CatalogProduct, onClose: () -> Unit, onSaved: () -> Unit) {
-    val scope = rememberCoroutineScope()
-    var name by remember(product.id) { mutableStateOf(product.name) }
-    var change by remember(product.id) { mutableStateOf<PhotoChange?>(null) }
-    var busy by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
-    val current by produceState<ByteArray?>(null, product.id) {
-        value = if (product.hasPhoto) CatalogRepository.productPhoto(product.id) else null
-    }
-    AlertDialog(
-        onDismissRequest = { if (!busy) onClose() },
-        title = { Text(if (product.name.isBlank()) "Novo produto" else "Editar produto") },
-        text = {
-            Column(
-                modifier = Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { if (it.length <= 160) name = it },
-                    label = { Text("Nome do produto") },
-                    singleLine = true,
-                    enabled = !busy,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                PhotoEditor("Foto do produto (opcional)", current, change, busy) { change = it }
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            }
-        },
-        dismissButton = { TextButton(onClick = onClose, enabled = !busy) { Text("Cancelar") } },
-        confirmButton = {
-            TextButton(
-                enabled = !busy && name.isNotBlank(),
-                onClick = {
-                    busy = true
-                    scope.launch {
-                        try {
-                            when (val result = CatalogRepository.saveProduct(product.id, name.trim(), change)) {
-                                is UiState.Success -> onSaved()
-                                is UiState.Error -> error = result.message
-                                UiState.Loading -> Unit
-                            }
-                        } finally {
-                            busy = false
-                        }
-                    }
-                }
-            ) { Text(if (busy) "Salvando…" else "Salvar") }
-        }
-    )
 }

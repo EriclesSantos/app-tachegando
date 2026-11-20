@@ -28,6 +28,15 @@
                 <data android:scheme="br.com.tachegandoapp" android:host="auth" />
             </intent-filter>
         </activity>
+        <provider
+            android:name=".features.vendor.ProductPhotoFileProvider"
+            android:authorities="${applicationId}.product-photos"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/product_photo_paths" />
+        </provider>
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyCt14kXPVlCL_WMl9oD4JNL2EwHA8oUghE" />

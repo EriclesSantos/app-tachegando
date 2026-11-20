@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 
 @Composable
 internal actual fun rememberProductPhotoPicker(
+    allowCamera: Boolean,
     onPhoto: (ByteArray) -> Unit,
     onError: (String) -> Unit
-): (() -> Unit)? = null
+): PhotoActions? = null

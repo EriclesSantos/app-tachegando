@@ -134,7 +134,6 @@ fun AppNavigation() {
                 biometricEntry = biometricSignIn?.let {
                     BiometricEntry(savedBiometricSignIn, biometricAvailability, it::restore)
                 },
-                showBiometricTip = biometrics != null
             )
         }
         is SessionStatus.Authenticated -> {

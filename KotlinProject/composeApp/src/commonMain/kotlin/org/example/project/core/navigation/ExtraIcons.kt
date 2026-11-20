@@ -9,6 +9,24 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
+internal val CameraIcon = ImageVector.Builder("Camera", 24.dp, 24.dp, 24f, 24f).apply {
+    path(stroke = SolidColor(Color.Black), strokeLineWidth = 1.8f, strokeLineJoin = StrokeJoin.Round) {
+        moveTo(3f, 7f)
+        horizontalLineTo(7.5f)
+        lineTo(9f, 4.5f)
+        horizontalLineTo(15f)
+        lineTo(16.5f, 7f)
+        horizontalLineTo(21f)
+        verticalLineTo(19.5f)
+        horizontalLineTo(3f)
+        close()
+        moveTo(15.5f, 12.8f)
+        curveTo(15.5f, 8.2f, 8.5f, 8.2f, 8.5f, 12.8f)
+        curveTo(8.5f, 17.4f, 15.5f, 17.4f, 15.5f, 12.8f)
+        close()
+    }
+}.build()
+
 internal val FingerprintIcon = ImageVector.Builder(
     name = "Fingerprint",
     defaultWidth = 24.dp,

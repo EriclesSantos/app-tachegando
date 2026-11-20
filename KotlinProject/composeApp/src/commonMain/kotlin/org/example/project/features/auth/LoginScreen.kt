@@ -1,9 +1,7 @@
 package org.example.project.features.auth
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,18 +13,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -46,9 +42,10 @@ import org.example.project.core.utils.UiState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -63,7 +60,6 @@ import androidx.compose.ui.unit.sp
 import org.example.project.core.navigation.ArrowForwardIcon
 import org.example.project.core.navigation.EmailIcon
 import org.example.project.core.navigation.FingerprintIcon
-import org.example.project.core.navigation.LocationOnIcon
 import org.example.project.core.navigation.LockIcon
 import org.example.project.core.navigation.PersonIcon
 import org.example.project.core.navigation.VisibilityIcon
@@ -78,7 +74,6 @@ import org.jetbrains.compose.resources.painterResource
 internal fun LoginScreen(
     sessionMessage: String?,
     biometricEntry: BiometricEntry?,
-    showBiometricTip: Boolean,
     onRegisterClick: () -> Unit,
     onForgotPassword: () -> Unit
 ) {
@@ -100,23 +95,21 @@ internal fun LoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .imePadding()
-                .padding(horizontal = 28.dp)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(60.dp))
-
             Image(
                 painter = painterResource(Res.drawable.logo),
-                contentDescription = "Logo Tá Chegando",
-                modifier = Modifier.size(200.dp)
+                contentDescription = null,
+                modifier = Modifier.size(108.dp)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = "T\u00e1 Chegando",
-                style = MaterialTheme.typography.headlineLarge.copy(
+                style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     color = AppColors.Primary
                 )
@@ -131,7 +124,7 @@ internal fun LoginScreen(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
                 value = email,
@@ -160,7 +153,7 @@ internal fun LoginScreen(
                 )
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
                 value = password,
@@ -225,7 +218,7 @@ internal fun LoginScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             Button(
                 onClick = {
@@ -246,7 +239,7 @@ internal fun LoginScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(54.dp),
+                    .height(50.dp),
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = AppColors.Primary
@@ -273,114 +266,65 @@ internal fun LoginScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                HorizontalDivider(
-                    modifier = Modifier.weight(1f),
-                    color = MaterialTheme.colorScheme.outline
-                )
-                Text(
-                    "  ou  ",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall
-                )
-                HorizontalDivider(
-                    modifier = Modifier.weight(1f),
-                    color = MaterialTheme.colorScheme.outline
-                )
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            if (supportsGoogleLogin) {
-                OutlinedButton(
-                    onClick = {
-                        errorMessage = null
-                        isLoading = true
-                        scope.launch {
-                            try {
-                                GoogleLogin.start()
-                            } finally {
-                                isLoading = false
-                            }
-                        }
-                    },
-                    enabled = !busy,
-                    modifier = Modifier.fillMaxWidth().height(54.dp),
-                    shape = RoundedCornerShape(14.dp)
-                ) {
-                    if (exchangingGoogleCode) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                    } else {
-                        Image(
-                            painter = painterResource(Res.drawable.google_g),
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(Modifier.width(10.dp))
-                        Text("Entrar com Google")
-                    }
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-
-            if (biometricEntry != null) {
-                Button(
-                    onClick = {
-                        isLoading = true
-                        errorMessage = null
-                        scope.launch {
-                            try {
-                                val result = biometricEntry.restore()
-                                if (result is UiState.Error) errorMessage = result.message
-                            } finally {
-                                isLoading = false
-                            }
-                        }
-                    },
-                    enabled = !busy && biometricEntry.enabled &&
-                        biometricEntry.availability == BiometricAvailability.Available,
-                    modifier = Modifier.fillMaxWidth().height(66.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AppColors.Secondary)
-                ) {
-                    Icon(FingerprintIcon, contentDescription = null, modifier = Modifier.size(29.dp))
-                    Spacer(Modifier.width(10.dp))
-                    Text("Entrar com biometria", style = MaterialTheme.typography.titleMedium)
-                }
-                val hint = biometricEntry.availability.message ?: if (!biometricEntry.enabled) {
-                    "Entre uma vez com sua conta e ative a biometria em Conta ou Perfil."
-                } else null
-                hint?.let {
-                    Text(
-                        it,
-                        modifier = Modifier.padding(top = 8.dp, bottom = 6.dp),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            } else if (showBiometricTip) {
+            if (supportsGoogleLogin || biometricEntry != null) {
+                Spacer(Modifier.height(12.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        FingerprintIcon,
-                        contentDescription = null,
-                        tint = AppColors.Primary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(
-                        "Depois de entrar, ative a biometria em Conta ou Perfil.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    if (supportsGoogleLogin) {
+                        OutlinedIconButton(
+                            onClick = {
+                                errorMessage = null
+                                isLoading = true
+                                scope.launch {
+                                    try {
+                                        GoogleLogin.start()
+                                    } finally {
+                                        isLoading = false
+                                    }
+                                }
+                            },
+                            enabled = !busy,
+                            modifier = Modifier.size(52.dp).semantics {
+                                contentDescription = "Entrar com Google"
+                            }
+                        ) {
+                            if (exchangingGoogleCode) {
+                                CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                            } else {
+                                Image(painterResource(Res.drawable.google_g), null, Modifier.size(22.dp))
+                            }
+                        }
+                    }
+                    if (biometricEntry != null) {
+                        val unavailable = biometricEntry.availability.message
+                            ?: "Ative a biometria em Conta ou Perfil."
+                        OutlinedIconButton(
+                            onClick = {
+                                isLoading = true
+                                errorMessage = null
+                                scope.launch {
+                                    try {
+                                        val result = biometricEntry.restore()
+                                        if (result is UiState.Error) errorMessage = result.message
+                                    } finally {
+                                        isLoading = false
+                                    }
+                                }
+                            },
+                            enabled = !busy && biometricEntry.enabled &&
+                                biometricEntry.availability == BiometricAvailability.Available,
+                            modifier = Modifier.size(52.dp).semantics {
+                                contentDescription = "Entrar com biometria"
+                                if (!biometricEntry.enabled || biometricEntry.availability != BiometricAvailability.Available) {
+                                    stateDescription = unavailable
+                                }
+                            }
+                        ) {
+                            Icon(FingerprintIcon, contentDescription = null, modifier = Modifier.size(26.dp))
+                        }
+                    }
                 }
             }
 
@@ -411,29 +355,6 @@ internal fun LoginScreen(
                         }
                     },
                     style = MaterialTheme.typography.bodyMedium
-                )
-            }
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = LocationOnIcon,
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    "Geolocaliza\u00e7\u00e3o em tempo real",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
             }
         }
