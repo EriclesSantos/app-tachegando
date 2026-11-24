@@ -23,11 +23,16 @@ val supabase = createSupabaseClient(
     // Exceções do SDK podem incluir cabeçalhos de autenticação.
     Auth.setLogLevel(LogLevel.NONE)
     install(Auth) {
+        val platformManager = platformSessionManager()
+        if (platformManager != null) {
+            sessionManager = platformManager
+            autoLoadFromStorage = false
+        }
         if (supportsGoogleLogin) {
             flowType = FlowType.PKCE
-            val protectedManager = platformSessionManager()
-            sessionManager = protectedManager ?: MemorySessionManager()
-            if (protectedManager != null) autoLoadFromStorage = false
+            if (platformManager == null) sessionManager = MemorySessionManager()
+        }
+        if (supportsGoogleLogin || platformManager != null) {
             codeVerifierCache = MemoryCodeVerifierCache()
         }
     }
