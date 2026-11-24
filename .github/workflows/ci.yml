@@ -68,12 +68,8 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - name: Refresh and capture the web lockfile
-        run: |
-          bash ./gradlew kotlinWasmUpgradeYarnLock
-          git diff --no-ext-diff -- kotlin-js-store/wasm/yarn.lock
       - name: Build web distribution
-        run: bash ./gradlew :composeApp:wasmJsBrowserDistribution
+        run: bash ./gradlew :composeApp:wasmJsBrowserDistribution --no-daemon
       - name: Upload web distribution
         uses: actions/upload-artifact@v4
         with:
