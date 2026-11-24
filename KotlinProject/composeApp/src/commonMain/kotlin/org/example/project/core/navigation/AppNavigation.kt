@@ -38,6 +38,7 @@ import org.example.project.features.vendor.VendorProductsScreen
 import org.example.project.features.vendor.VendorProductEditorScreen
 import org.example.project.features.vendor.VendorRouteScreen
 import org.example.project.features.vendor.VendorSettingsScreen
+import org.example.project.features.vendor.err.ActiveRouteScreen
 
 @Composable
 internal fun AppGraph(
@@ -211,8 +212,16 @@ internal fun AppGraph(
             }
             composable(NavDestination.VendorDashboard.route) {
                 VendorDashboardScreen(
-                    onStartRoute = { navController.navigate(NavDestination.VendorRoute.route) }
+                    onStartRoute = { navController.navigate(NavDestination.VendorRoute.route) },
+                    onStartFreeMovement = {
+                        navController.navigate(NavDestination.VendorFreeMovement.route) {
+                            launchSingleTop = true
+                        }
+                    }
                 )
+            }
+            composable(NavDestination.VendorFreeMovement.route) {
+                ActiveRouteScreen(routeId = null, onStopRoute = { navController.popBackStack() })
             }
             composable(NavDestination.VendorRoute.route) {
                 VendorRouteScreen(
@@ -234,11 +243,11 @@ internal fun AppGraph(
 
             composable(
                 route = "err_active_route/{routeId}",
-                arguments = listOf(androidx.navigation.navArgument("routeId") { type = androidx.navigation.NavType.StringType })
+                arguments = listOf(navArgument("routeId") { type = NavType.StringType })
             ) { backStackEntry ->
-                val rId = backStackEntry.arguments?.read { getStringOrNull("routeId") } ?: return@composable
-                org.example.project.features.vendor.err.ActiveRouteScreen(
-                    routeId = rId,
+                val routeId = backStackEntry.arguments?.read { getStringOrNull("routeId") } ?: return@composable
+                ActiveRouteScreen(
+                    routeId = routeId,
                     onStopRoute = {
                         navController.navigate(NavDestination.VendorDashboard.route) {
                             popUpTo(NavDestination.VendorDashboard.route) { inclusive = true }

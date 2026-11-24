@@ -17,6 +17,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import org.example.project.core.ui.maps.reserveSpaceAroundHtmlMap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -26,6 +32,7 @@ import org.example.project.core.ui.maps.HeatZoneLocation
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HeatmapScreen() {
+    var legendHeight by remember { mutableIntStateOf(0) }
     // Coordenadas simuladas em São Paulo para zonas de calor
     val heatZones = listOf(
         HeatZoneLocation(Location(-23.5505, -46.6333), 0.95f, 1500.0), // Centro
@@ -43,7 +50,7 @@ fun HeatmapScreen() {
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             // Background Map with Heat Zones
             org.example.project.core.ui.maps.NativeMap(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().reserveSpaceAroundHtmlMap(bottom = legendHeight),
                 userLocation = Location(-23.5505, -46.6333), // Centralizado em SP
                 heatZones = heatZones,
                 onMapClick = {}
@@ -54,6 +61,7 @@ fun HeatmapScreen() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
+                    .onSizeChanged { legendHeight = it.height }
                     .padding(16.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {

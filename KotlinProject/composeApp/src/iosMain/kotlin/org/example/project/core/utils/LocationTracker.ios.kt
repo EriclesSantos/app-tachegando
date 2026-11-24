@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 
 class IosLocationTracker : LocationTracker {
+    override val supportsTracking = false
+
     override suspend fun getCurrentLocation(): Location? {
         // TODO: Implement with CLLocationManager
         return null

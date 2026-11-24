@@ -11,14 +11,10 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -26,10 +22,9 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VendorDashboardScreen(
-    onStartRoute: () -> Unit
+    onStartRoute: () -> Unit,
+    onStartFreeMovement: () -> Unit
 ) {
-    var isOnline by remember { mutableStateOf(false) }
-
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Meu trabalho") })
@@ -44,18 +39,18 @@ fun VendorDashboardScreen(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    if (isOnline) "Você aparece no mapa" else "Você não aparece no mapa",
+                    "Compartilhar minha localização",
+                    modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.titleLarge,
-                    color = if (isOnline) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-                Switch(
-                    checked = isOnline,
-                    onCheckedChange = { isOnline = it }
-                )
+                TextButton(onClick = onStartFreeMovement) {
+                    Text("Ativar GPS")
+                }
             }
 
             // Stats
@@ -69,8 +64,7 @@ fun VendorDashboardScreen(
 
             Button(
                 onClick = onStartRoute,
-                modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
-                enabled = isOnline
+                modifier = Modifier.fillMaxWidth().padding(top = 32.dp)
             ) {
                 Text("Começar minha rota")
             }

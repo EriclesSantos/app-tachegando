@@ -26,6 +26,7 @@ sealed class NavDestination(val route: String, val title: String) {
 
     object VendorDashboard : NavDestination("vendor_dashboard", "Inicio")
     object VendorRoute : NavDestination("vendor_route", "Rota")
+    object VendorFreeMovement : NavDestination("vendor_free_movement", "Movimentação livre")
     object VendorHeatmap : NavDestination("vendor_heatmap", "Clientes")
     object VendorSettings : NavDestination("vendor_settings", "Conta")
     object VendorSubscription : NavDestination("vendor_subscription", "Meu Plano")
