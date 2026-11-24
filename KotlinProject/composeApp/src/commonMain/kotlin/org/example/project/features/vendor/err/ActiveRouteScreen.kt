@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -21,10 +22,12 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.example.project.core.domain.models.DemandCluster
 import org.example.project.core.data.RouteRepository
 import org.example.project.core.data.CatalogRepository
 import org.example.project.core.ui.maps.NativeMap
+import org.example.project.core.ui.maps.reserveSpaceAroundHtmlMap
 import org.example.project.core.utils.Location
 import org.example.project.core.utils.UiState
 import org.example.project.core.utils.rememberLocationTracker
@@ -32,7 +35,7 @@ import org.example.project.core.utils.rememberLocationTracker
 @OptIn(ExperimentalUuidApi::class)
 @Composable
 fun ActiveRouteScreen(
-    routeId: String,
+    routeId: String?,
     onStopRoute: () -> Unit
 ) {
     val engine = remember { ERREngine(RouteRepository()) }
@@ -40,19 +43,29 @@ fun ActiveRouteScreen(
     val tracker = rememberLocationTracker()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     var currentLocation by remember(routeId) { mutableStateOf<Location?>(null) }
+    val traveledPoints = remember(routeId) { mutableStateListOf<Location>() }
     var sharingMessage by remember(routeId) { mutableStateOf("Aguardando localização do aparelho…") }
     var sharingError by remember(routeId) { mutableStateOf(false) }
     var retrySharing by remember(routeId) { mutableIntStateOf(0) }
+    var topControlsHeight by remember { mutableIntStateOf(0) }
+    var bottomPanelHeight by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(routeId, retrySharing, lifecycle) {
         sharingError = false
+        if (!tracker.supportsTracking) {
+            sharingMessage = "Localização indisponível. No navegador, abra o app por HTTPS."
+            return@LaunchedEffect
+        }
         if (!tracker.requestLocationPermission()) {
             sharingMessage = "Autorize a localização para aparecer no mapa."
             sharingError = true
             return@LaunchedEffect
         }
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            currentLocation = null
+            traveledPoints.clear()
             sharingMessage = "Aguardando localização do aparelho…"
+            sharingError = false
             val sessionId = Uuid.random().toString()
             val updates = Channel<Location>(Channel.CONFLATED)
             try {
@@ -66,11 +79,19 @@ fun ActiveRouteScreen(
                     currentLocation = fix
                     updates.trySend(fix)
                 }
-                for (fix in updates) {
+                while (true) {
+                    val fix = withTimeoutOrNull(20_000) { updates.receive() }
+                    if (fix == null) {
+                        currentLocation = null
+                        sharingMessage = "Sem sinal recente de GPS. Confira a localização do aparelho."
+                        sharingError = true
+                        continue
+                    }
                     val sent = CatalogRepository.publishMapPosition(sessionId, fix)
                     when (sent) {
                         is UiState.Success -> {
-                            sharingMessage = "Sua rota aparece no mapa."
+                            if (traveledPoints.lastOrNull() != fix) traveledPoints.add(fix)
+                            sharingMessage = "Sua localização aparece no mapa."
                             sharingError = false
                         }
                         is UiState.Error -> {
@@ -90,6 +111,7 @@ fun ActiveRouteScreen(
     }
 
     LaunchedEffect(routeId) {
+        if (routeId == null) return@LaunchedEffect
         while (true) {
             try {
                 clusters = engine.processIntents(routeId)
@@ -104,8 +126,10 @@ fun ActiveRouteScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         NativeMap(
-            modifier = Modifier.fillMaxSize(),
-            userLocation = currentLocation
+            modifier = Modifier.fillMaxSize()
+                .reserveSpaceAroundHtmlMap(topControlsHeight, bottomPanelHeight),
+            userLocation = currentLocation,
+            traveledPoints = traveledPoints
         )
 
         // Botão de voltar/encerrar no topo
@@ -114,6 +138,7 @@ fun ActiveRouteScreen(
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
             modifier = Modifier
                 .align(Alignment.TopEnd)
+                .onSizeChanged { topControlsHeight = it.height }
                 .padding(16.dp)
                 .padding(top = 32.dp),
             shape = RoundedCornerShape(12.dp)
@@ -121,12 +146,12 @@ fun ActiveRouteScreen(
             Text("Parar", fontWeight = FontWeight.Bold)
         }
 
-        // Painel flutuante de Desvios Sugeridos
         Card(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .fillMaxHeight(0.45f) // Ocupa os 45% inferiores
+                .onSizeChanged { bottomPanelHeight = it.height }
+                .then(if (routeId == null) Modifier else Modifier.fillMaxHeight(0.45f))
                 .padding(8.dp),
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 16.dp, bottomEnd = 16.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
@@ -134,7 +159,7 @@ fun ActiveRouteScreen(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    "Clientes perto da rota",
+                    if (routeId == null) "Movimentação livre" else "Clientes perto da rota",
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                 )
                 Text(
@@ -143,6 +168,8 @@ fun ActiveRouteScreen(
                     color = if (sharingError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 if (sharingError) TextButton(onClick = { retrySharing++ }) { Text("Tentar novamente") }
+
+                if (routeId == null) return@Column
                 Spacer(modifier = Modifier.height(12.dp))
 
                 LazyColumn(modifier = Modifier.fillMaxSize()) {

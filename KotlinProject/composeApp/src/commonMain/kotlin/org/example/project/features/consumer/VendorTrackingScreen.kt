@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,7 +40,11 @@ import org.example.project.core.navigation.PersonIcon
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import org.example.project.core.ui.maps.rememberActiveVendorMarkers
+import org.example.project.core.ui.maps.reserveSpaceAroundHtmlMap
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +54,7 @@ fun VendorTrackingScreen(
     onProfileClick: (String) -> Unit
 ) {
     val activeVendors by rememberActiveVendorMarkers(vendorId)
+    var profileButtonHeight by remember { mutableIntStateOf(0) }
     val uiState by produceState<UiState<Vendor?>>(initialValue = UiState.Loading, vendorId) {
         val result = VendorRepository.getById(vendorId)
         value = UiState.Success(result)
@@ -114,8 +120,9 @@ fun VendorTrackingScreen(
                     .clip(RoundedCornerShape(12.dp))
             ) {
                 org.example.project.core.ui.maps.NativeMap(
-                    modifier = Modifier.fillMaxSize(),
-                    activeVendors = activeVendors
+                    modifier = Modifier.fillMaxSize().reserveSpaceAroundHtmlMap(bottom = profileButtonHeight),
+                    activeVendors = activeVendors,
+                    traveledPoints = activeVendors.firstOrNull()?.traveled.orEmpty()
                 )
                 // Overlay button
                 Box(
@@ -124,7 +131,7 @@ fun VendorTrackingScreen(
                 ) {
                     OutlinedButton(
                         onClick = { onProfileClick(vendorId) },
-                        modifier = Modifier.padding(bottom = 16.dp)
+                        modifier = Modifier.onSizeChanged { profileButtonHeight = it.height }.padding(bottom = 16.dp)
                     ) {
                         Text("Ver perfil")
                     }

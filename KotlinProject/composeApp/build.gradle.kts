@@ -71,6 +71,10 @@ kotlin {
         }
         wasmJsMain.dependencies {
             implementation(libs.ktor.client.js)
+            // Supabase 3.1 uses the pre-0.7 datetime types. The 0.7.1 aliases fail to link on Wasm.
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime") {
+                version { strictly("0.7.1-0.6.x-compat") }
+            }
         }
     }
 }

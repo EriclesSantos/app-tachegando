@@ -38,6 +38,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
@@ -50,6 +51,7 @@ import org.example.project.core.data.VendorRepository
 import org.example.project.core.data.supabase
 import org.example.project.core.domain.models.RouteWeekday
 import org.example.project.core.ui.maps.NativeMap
+import org.example.project.core.ui.maps.reserveSpaceAroundHtmlMap
 import org.example.project.core.utils.Location
 import org.example.project.core.utils.rememberLocationTracker
 import kotlin.math.roundToInt
@@ -68,6 +70,8 @@ fun RouteConfigScreen(
     var routeDraft by remember { mutableStateOf(RouteDraftState()) }
     var routeSchedule by remember { mutableStateOf(RouteScheduleState()) }
     var mapSheetState by remember { mutableStateOf(RouteMapSheetState()) }
+    var topPanelHeight by remember { mutableStateOf(0) }
+    var bottomPanelHeight by remember { mutableStateOf(0) }
     var expandedSheetDragOffset by remember { mutableStateOf(0f) }
     var collapsedSheetDragOffset by remember { mutableStateOf(0f) }
 
@@ -137,7 +141,10 @@ fun RouteConfigScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         NativeMap(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().reserveSpaceAroundHtmlMap(
+                top = if (mapSheetState.isVisible) topPanelHeight else 0,
+                bottom = bottomPanelHeight
+            ),
             userLocation = currentLocation ?: Location(-23.5505, -46.6333),
             routePoints = routeDraft.routePoints,
             onMapClick = { location ->
@@ -152,6 +159,7 @@ fun RouteConfigScreen(
             Surface(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
+                    .onSizeChanged { topPanelHeight = it.height }
                     .fillMaxWidth(),
                 color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
                 shadowElevation = 4.dp
@@ -222,6 +230,7 @@ fun RouteConfigScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
+                    .onSizeChanged { bottomPanelHeight = it.height }
                     .padding(16.dp)
                     .offset { IntOffset(0, expandedSheetDragOffset.roundToInt()) },
                 shape = RoundedCornerShape(16.dp),
@@ -337,6 +346,7 @@ fun RouteConfigScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
+                    .onSizeChanged { bottomPanelHeight = it.height }
                     .wrapContentHeight()
                     .padding(16.dp)
                     .offset { IntOffset(0, collapsedSheetDragOffset.roundToInt()) }

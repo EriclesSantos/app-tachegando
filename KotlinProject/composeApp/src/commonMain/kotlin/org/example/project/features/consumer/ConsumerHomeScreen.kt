@@ -26,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -36,6 +37,8 @@ import org.example.project.core.data.VendorRepository
 import org.example.project.core.data.Vendor
 import org.example.project.core.utils.UiState
 import org.example.project.core.ui.maps.rememberActiveVendorMarkers
+import org.example.project.core.ui.maps.reserveSpaceAroundHtmlMap
+import org.example.project.getPlatform
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.foundation.layout.Row
@@ -58,7 +61,9 @@ fun ConsumerHomeScreen(
     onVendorClick: (String) -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
-    var sheetState by remember { mutableStateOf(ConsumerMapSheetState()) }
+    var sheetState by remember { mutableStateOf(ConsumerMapSheetState(isVisible = !getPlatform().embedsHtmlMap)) }
+    var searchHeight by remember { mutableStateOf(0) }
+    var bottomPanelHeight by remember { mutableStateOf(0) }
     var expandedSheetDragOffset by remember { mutableStateOf(0f) }
     var collapsedSheetDragOffset by remember { mutableStateOf(0f) }
 
@@ -78,7 +83,7 @@ fun ConsumerHomeScreen(
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             // Native Map KMP Component
             org.example.project.core.ui.maps.NativeMap(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().reserveSpaceAroundHtmlMap(searchHeight, bottomPanelHeight),
                 userLocation = null, // TODO: Add consumer's own location tracking later
                 activeVendors = activeVendors,
                 onVendorClick = onVendorClick
@@ -88,6 +93,7 @@ fun ConsumerHomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
+                    .onSizeChanged { bottomPanelHeight = it.height }
             ) {
                 if (sheetState.isVisible) {
                     Card(
@@ -276,6 +282,7 @@ fun ConsumerHomeScreen(
                 onValueChange = { searchQuery = it },
                 modifier = Modifier
                     .fillMaxWidth()
+                    .onSizeChanged { searchHeight = it.height }
                     .padding(16.dp)
                     .background(MaterialTheme.colorScheme.surface),
                 placeholder = { Text("Buscar profissional ou produto...") }

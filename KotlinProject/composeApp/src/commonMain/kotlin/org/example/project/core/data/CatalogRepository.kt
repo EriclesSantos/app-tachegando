@@ -49,7 +49,8 @@ data class VendorMapMarker(
     val longitude: Double,
     val transport: VendorTransport? = null,
     @SerialName("has_photo") val hasPhoto: Boolean = false,
-    @SerialName("avatar_revision") val avatarRevision: String? = null
+    @SerialName("avatar_revision") val avatarRevision: String? = null,
+    val traveled: List<Location> = emptyList()
 ) {
     val location get() = Location(latitude, longitude)
 }
@@ -129,12 +130,20 @@ internal object CatalogRepository {
             Unit
         }
 
-    suspend fun mapMarkers(vendorId: String? = null): UiState<List<VendorMapMarker>> =
-        request("Não foi possível atualizar o mapa.") {
-            api.rpc("app_get_map_markers", buildJsonObject {
-                put("p_vendor_id", vendorId?.let(::JsonPrimitive) ?: JsonNull)
-            }).decodeList<VendorMapMarker>()
+    suspend fun mapMarkers(vendorId: String? = null): UiState<List<VendorMapMarker>> {
+        val parameters = buildJsonObject {
+            put("p_vendor_id", vendorId?.let(::JsonPrimitive) ?: JsonNull)
         }
+        if (vendorId != null) {
+            val tracking = request("Não foi possível carregar o percurso.") {
+                api.rpc("app_get_map_tracking", parameters).decodeList<VendorMapMarker>()
+            }
+            if (tracking is UiState.Success) return tracking
+        }
+        return request("Não foi possível atualizar o mapa.") {
+            api.rpc("app_get_map_markers", parameters).decodeList<VendorMapMarker>()
+        }
+    }
 
     private suspend fun mapSession(function: String, id: String): UiState<Unit> =
         request("Não foi possível atualizar sua rota no mapa.") {
