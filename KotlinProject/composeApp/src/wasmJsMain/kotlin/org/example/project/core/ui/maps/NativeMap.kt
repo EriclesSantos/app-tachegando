@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
+
 package org.example.project.core.ui.maps
 
 import androidx.compose.runtime.Composable
