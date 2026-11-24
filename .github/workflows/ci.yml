@@ -70,3 +70,9 @@ jobs:
           java-version: 21
       - name: Build web distribution
         run: bash ./gradlew :composeApp:wasmJsBrowserDistribution --no-daemon
+      - name: Upload web distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: tachegando-web
+          path: KotlinProject/composeApp/build/dist/wasmJs/productionExecutable
+          if-no-files-found: error
