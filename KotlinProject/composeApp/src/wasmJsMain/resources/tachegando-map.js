@@ -24,6 +24,9 @@
             vendorMarkers: new Map(),
             otherLayers: L.layerGroup().addTo(map),
             route: L.polyline([], { color: '#ff6b00', weight: 4 }).addTo(map),
+            traveled: L.polyline([], {
+                color: '#7c3aed', weight: 5, opacity: 0.9, interactive: false
+            }).addTo(map),
             userMarker: null,
             centered: false
         });
@@ -73,7 +76,7 @@
         const state = maps.get(element);
         if (!state || state.rawData === rawData) return;
         state.rawData = rawData;
-        const { user, vendors, route, locations, heatZones } = JSON.parse(rawData);
+        const { user, vendors, route, traveled = [], locations, heatZones } = JSON.parse(rawData);
         const center = user || vendors[0]?.location || route[0];
         if (center && !state.centered) {
             state.map.setView(center, 15);
@@ -94,6 +97,7 @@
         }
 
         state.route.setLatLngs(route);
+        state.traveled.setLatLngs(traveled);
         state.otherLayers.clearLayers();
         for (const location of locations) {
             L.circleMarker(location, { color: '#ff6b00', radius: 7 }).addTo(state.otherLayers);

@@ -121,7 +121,8 @@ fun VendorTrackingScreen(
             ) {
                 org.example.project.core.ui.maps.NativeMap(
                     modifier = Modifier.fillMaxSize().reserveSpaceAroundHtmlMap(bottom = profileButtonHeight),
-                    activeVendors = activeVendors
+                    activeVendors = activeVendors,
+                    traveledPoints = activeVendors.firstOrNull()?.traveled.orEmpty()
                 )
                 // Overlay button
                 Box(

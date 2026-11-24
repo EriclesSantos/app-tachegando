@@ -43,6 +43,7 @@ fun ActiveRouteScreen(
     val tracker = rememberLocationTracker()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     var currentLocation by remember(routeId) { mutableStateOf<Location?>(null) }
+    val traveledPoints = remember(routeId) { mutableStateListOf<Location>() }
     var sharingMessage by remember(routeId) { mutableStateOf("Aguardando localização do aparelho…") }
     var sharingError by remember(routeId) { mutableStateOf(false) }
     var retrySharing by remember(routeId) { mutableIntStateOf(0) }
@@ -62,6 +63,7 @@ fun ActiveRouteScreen(
         }
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             currentLocation = null
+            traveledPoints.clear()
             sharingMessage = "Aguardando localização do aparelho…"
             sharingError = false
             val sessionId = Uuid.random().toString()
@@ -88,6 +90,7 @@ fun ActiveRouteScreen(
                     val sent = CatalogRepository.publishMapPosition(sessionId, fix)
                     when (sent) {
                         is UiState.Success -> {
+                            if (traveledPoints.lastOrNull() != fix) traveledPoints.add(fix)
                             sharingMessage = "Sua localização aparece no mapa."
                             sharingError = false
                         }
@@ -125,7 +128,8 @@ fun ActiveRouteScreen(
         NativeMap(
             modifier = Modifier.fillMaxSize()
                 .reserveSpaceAroundHtmlMap(topControlsHeight, bottomPanelHeight),
-            userLocation = currentLocation
+            userLocation = currentLocation,
+            traveledPoints = traveledPoints
         )
 
         // Botão de voltar/encerrar no topo

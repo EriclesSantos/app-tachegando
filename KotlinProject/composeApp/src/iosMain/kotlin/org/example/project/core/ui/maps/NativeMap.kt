@@ -22,6 +22,7 @@ actual fun NativeMap(
     heatZones: List<HeatZoneLocation>,
     onMapClick: (Location) -> Unit,
     activeVendors: List<VendorMapMarker>,
+    traveledPoints: List<Location>,
     onVendorClick: (String) -> Unit
 ) {
     // Placeholder para iOS até a biblioteca nativa ou CocoaPods ser configurada.

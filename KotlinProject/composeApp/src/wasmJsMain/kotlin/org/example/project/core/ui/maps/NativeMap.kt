@@ -38,6 +38,7 @@ actual fun NativeMap(
     heatZones: List<HeatZoneLocation>,
     onMapClick: (Location) -> Unit,
     activeVendors: List<VendorMapMarker>,
+    traveledPoints: List<Location>,
     onVendorClick: (String) -> Unit
 ) {
     val currentMapClick by rememberUpdatedState(onMapClick)
@@ -46,6 +47,7 @@ actual fun NativeMap(
         userLocation?.let { put("user", it.toMapCoordinates()) }
         put("locations", buildJsonArray { vendorLocations.forEach { add(it.toMapCoordinates()) } })
         put("route", buildJsonArray { routePoints.forEach { add(it.toMapCoordinates()) } })
+        put("traveled", buildJsonArray { traveledPoints.forEach { add(it.toMapCoordinates()) } })
         put("vendors", buildJsonArray {
             activeVendors.forEach { marker ->
                 add(buildJsonObject {

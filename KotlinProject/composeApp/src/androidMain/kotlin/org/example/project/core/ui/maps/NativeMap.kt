@@ -49,6 +49,7 @@ actual fun NativeMap(
     heatZones: List<HeatZoneLocation>,
     onMapClick: (Location) -> Unit,
     activeVendors: List<VendorMapMarker>,
+    traveledPoints: List<Location>,
     onVendorClick: (String) -> Unit
 ) {
     val context = LocalContext.current.applicationContext
@@ -146,6 +147,13 @@ actual fun NativeMap(
                 points = routePoints.map { LatLng(it.latitude, it.longitude) },
                 color = androidx.compose.ui.graphics.Color(0xFFFF6B00),
                 width = 8f
+            )
+        }
+        if (traveledPoints.size >= 2) {
+            Polyline(
+                points = traveledPoints.map { LatLng(it.latitude, it.longitude) },
+                color = androidx.compose.ui.graphics.Color(0xFF7C3AED),
+                width = 9f
             )
         }
         routePoints.forEachIndexed { index, loc ->

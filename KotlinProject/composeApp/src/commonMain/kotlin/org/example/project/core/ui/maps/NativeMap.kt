@@ -20,5 +20,6 @@ expect fun NativeMap(
     heatZones: List<HeatZoneLocation> = emptyList(),
     onMapClick: (Location) -> Unit = {},
     activeVendors: List<VendorMapMarker> = emptyList(),
+    traveledPoints: List<Location> = emptyList(),
     onVendorClick: (String) -> Unit = {}
 )
